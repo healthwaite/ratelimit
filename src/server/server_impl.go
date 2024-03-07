@@ -6,6 +6,7 @@ import (
 	"expvar"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"net/http/pprof"
@@ -54,6 +55,7 @@ type serverDebugListener struct {
 type server struct {
 	httpAddress   string
 	grpcAddress   string
+	isUds         bool
 	debugAddress  string
 	router        *mux.Router
 	grpcServer    *grpc.Server
@@ -186,9 +188,16 @@ func (server *server) Start() {
 
 func (server *server) startGrpc() {
 	logger.Warnf("Listening for gRPC on '%s'", server.grpcAddress)
-	lis, err := reuseport.Listen("tcp", server.grpcAddress)
+	var network string
+	if server.isUds {
+		network = "unix"
+	} else {
+		network = "tcp"
+	}
+
+	lis, err := net.Listen(network, server.grpcAddress)
 	if err != nil {
-		logger.Fatalf("Failed to listen for gRPC: %v", err)
+		log.Fatalf("Failed to listen: %v", err)
 	}
 	server.grpcServer.Serve(lis)
 }
@@ -236,7 +245,14 @@ func newServer(s settings.Settings, name string, statsManager stats.Manager, loc
 
 	// setup listen addresses
 	ret.httpAddress = net.JoinHostPort(s.Host, strconv.Itoa(s.Port))
-	ret.grpcAddress = net.JoinHostPort(s.GrpcHost, strconv.Itoa(s.GrpcPort))
+	if s.GrpcUds != "" {
+		fmt.Printf("UNIX DOMAIN BABY %s\n", s.GrpcUds)
+		ret.grpcAddress = s.GrpcUds
+		ret.isUds = true
+	} else {
+		ret.grpcAddress = net.JoinHostPort(s.GrpcHost, strconv.Itoa(s.GrpcPort))
+		ret.isUds = false
+	}
 	ret.debugAddress = net.JoinHostPort(s.DebugHost, strconv.Itoa(s.DebugPort))
 
 	// setup stats
