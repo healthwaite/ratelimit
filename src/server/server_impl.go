@@ -6,7 +6,6 @@ import (
 	"expvar"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"net/http/pprof"
@@ -197,7 +196,7 @@ func (server *server) startGrpc() {
 
 	lis, err := net.Listen(network, server.grpcAddress)
 	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
+		logger.Fatalf("Failed to listen: %v", err)
 	}
 	server.grpcServer.Serve(lis)
 }
