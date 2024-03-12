@@ -187,14 +187,14 @@ func (server *server) Start() {
 
 func (server *server) startGrpc() {
 	logger.Warnf("Listening for gRPC on '%s'", server.grpcAddress)
-	var network string
+	var lis net.Listener
+	var err error
 	if server.isUds {
-		network = "unix"
+		lis, err = net.Listen("unix", server.grpcAddress)
 	} else {
-		network = "tcp"
+		lis, err = reuseport.Listen("tcp", server.grpcAddress)
 	}
 
-	lis, err := net.Listen(network, server.grpcAddress)
 	if err != nil {
 		logger.Fatalf("Failed to listen: %v", err)
 	}
