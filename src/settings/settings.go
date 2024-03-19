@@ -21,6 +21,8 @@ type Settings struct {
 	DebugPort int    `envconfig:"DEBUG_PORT" default:"6070"`
 
 	// GRPC server settings
+	// If GrpcUds is set we'll listen on the specified unix domain socket address
+	// rather then GrpcHost:GrpcPort
 	GrpcUds  string `envconfig:"GRPC_UDS" default:""`
 	GrpcHost string `envconfig:"GRPC_HOST" default:"0.0.0.0"`
 	GrpcPort int    `envconfig:"GRPC_PORT" default:"8081"`
